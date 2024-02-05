@@ -71,7 +71,7 @@ Deploying the application to Kubernetes and AWS involves the following steps:
 
 1. Customize Kubernetes manifests in the `k8s/` directory.
 
-2. Update AWS CDK code in the `cdk/` directory according to your infrastructure requirements.
+2. Update infrastructure `infra/` directory according to your infrastructure requirements.
 
 3. Deploy the application using Kubernetes and AWS CDK commands.
 
