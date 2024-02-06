@@ -1,0 +1,69 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-docker-k8s-infra-template-deployment
+  labels:
+    app: api-docker-k8s-infra-template-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-docker-k8s-infra-template-deployment
+  template:
+    metadata:
+      labels:
+        app: api-docker-k8s-infra-template-deployment
+    spec: 
+      containers:
+        - name: api-docker-k8s-infra-template
+          image: api-docker-k8s-infra-template:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 3
+
+      #https://kubernetes.io/docs/concepts/storage/volumes/  
+    #   volumeMounts:
+    #   - name: database-dir
+    #     mountPath: /var/lib/cats-dogs
+    #   - name: database-file
+    #     mountPath: /var/lib/cats-dogs/database
+    # volumes:
+    #     - name: database-dir
+    #       hostPath:
+    #         path: /var/lib/cats-dogs
+    #         type: DirectoryOrCreate
+    #     - name: database-file
+    #       hostPath:
+    #         path: /var/lib/cats-dogs/database
+    #         type: FileOrCreate
+
+---
+
+apiVersion: v1
+kind: Service 
+metadata:
+  name: api-docker-k8s-infra-template-service
+  labels:
+    app: api-docker-k8s-infra-template-service
+spec:
+  selector:
+    app: api-docker-k8s-infra-template-service-deployment
+  type: NodePort
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30007 # This will expose the port that the client can access the UI on. i.e. port to container port mapping
+  

@@ -31,9 +31,9 @@ The project consists of the following key components:
 
 2. **Dockerfile**: This file contains instructions to build a Docker image for your Flask application. Docker enables containerization, making your application portable and scalable.
 
-3. **Kubernetes Manifests**: The `k8s/` directory contains Kubernetes YAML manifests for deploying and managing your containerized application. Customize these files based on your deployment needs.
+3. **Kubernetes Manifests**: The `orchestration/` directory contains Kubernetes YAML manifests for deploying and managing your containerized application. Customize these files based on your deployment needs.
 
-4. **AWS CDK or Terraform**: The `infra/` directory includes AWS CDK code written in Python; or Terraform. This code defines the infrastructure required to deploy your containerized application on AWS.
+4. **AWS CDK or Terraform**: The `infrastructure/` directory includes AWS CDK code written in Python; or Terraform. This code defines the infrastructure required to deploy your containerized application on AWS.
 
 ## Setup
 
@@ -43,9 +43,11 @@ The project consists of the following key components:
     git clone https://github.com/ImranAdan/api-docker-k8s-infra-template
     ```
 
-2. **Install Dependencies**: Ensure you have Docker, Kubernetes, and AWS CDK or Terraform installed on your local machine.
+2. **Install Dependencies**: Ensure you have Python, Docker, Kubernetes, and AWS CDK or Terraform installed on your local machine. Each project contains README files to get this started. 
 
 3. **Customize Flask App**: Modify the Flask app in the `app/` directory to meet your specific API requirements.
+
+4. **Deploy Flask App to the Cloud**: The final aspect would be to deploy to a given cloud provider, in this instance it is AWS. The specific method depends on the approach chosen. 
 
 ## Usage
 
@@ -53,27 +55,29 @@ To run the application locally, follow these steps:
 
 1. Build the Docker image:
 
-    ```bash
-    docker build -t basic-containerized-app .
-    ```
+This project has been built on an M2 machine and therefore you will need to specify the default platform to support ARM chips. 
+
+```bash 
+docker image build --platform linux/amd64 --tag api-docker-k8s-infra-template .
+```
 
 2. Run the Docker container:
 
     ```bash
-    docker run -p 5000:5000 basic-containerized-app
+    docker container run -d -p 8080:8080 api-docker-k8s-infra-template
     ```
 
-Visit `http://localhost:5000` in your browser to access the Flask app.
+Visit `http://localhost:8080` in your browser to access the Flask app.
 
 ## Deployment
 
 Deploying the application to Kubernetes and AWS involves the following steps:
 
-1. Customize Kubernetes manifests in the `k8s/` directory.
+1. Customize Kubernetes manifests in the `orchestration/` directory.
 
-2. Update infrastructure `infra/` directory according to your infrastructure requirements.
+2. Update infrastructure `infrastructure/` directory according to your infrastructure requirements.
 
-3. Deploy the application using Kubernetes and AWS CDK commands.
+3. Deploy the application using Kubernetes and AWS.
 
 ## Contributing
 
