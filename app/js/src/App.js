@@ -62,13 +62,6 @@ function Board({ row, column, currentCount, wordsToGuess, foundSoFar, squares, c
 		<>
 			<h1>Word-puzzle</h1>
 			{
-				// <div className="board-row">
-				// 	{
-				// 		target.map((v, i) => {
-				// 			return <Square value={v} />
-				// 		})
-				// 	}
-				// </div>
 
 				Array(row).fill(null).map((a, n) => {
 					return (
