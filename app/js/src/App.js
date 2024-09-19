@@ -29,18 +29,59 @@ function ResetGame({ resetBoard }) {
 
 function Board({ row, column, currentCount, wordsToGuess, foundSoFar, squares, choices, onPlay }) {
 
+	// Algorithm to fit a bunch of words into a grid (2 dimensional array)
+	// - pick a random word
+	//		place vertically or horizonally
 	function wordsToGuessToGrid() {
-		const guessGrid = Array(4*4);
-		guessGrid[0] = 'a';
-		guessGrid[1] = 'n';
-		guessGrid[2] = 'd';
-		guessGrid[4] = 'n';
-		guessGrid[8] = 't';
+		// let startingPos = 0;
+		// const startingWord = wordsToGuess[Math.floor(Math.random() * (wordsToGuess.length - 1))];
+		// console.log('starting word -> ' + startingWord);
+		// fitWords();
+
+		let gridArr = [{word: 'and', startPos: 0, rotation: 'h'}, {word: 'ant', startPos: 0, rotation: 'v'}];
+		const guessGrid = Array(row*column);
+
+		for (let i in gridArr) {
+			// console.log(gridArr[i]);
+			const word = gridArr[i].word;
+			const pos = gridArr[i].startPos;
+			const rot = gridArr[i].rotation;
+			for (let w = 0; w < word.length; w++) {
+				if (rot === 'h') {
+					guessGrid[pos + w] = word[w];
+				} else if (rot === 'v') {
+					guessGrid[pos + (w * column)] = word[w];
+				}
+			}
+		}
+
 		return guessGrid;
 	}
 
-	const [targetGrid, setTargetGrid] = useState(wordsToGuessToGrid);
+	// An algorithm to show how a bunch of words fit into a grid
+	// startPos for dependent word = the start position of dependent word + the offset (the position of starting word)
+	function fitWords() {
+		let result = new Map();
+		let startingPos = 0;
+		let startRotation = 'h';
+		const startingWord = wordsToGuess[Math.floor(Math.random() * (wordsToGuess.length - 1))];
+		result.set( startingWord, {word: startingWord, startPos: startingPos, rotation: 'h', relyOn: ''});
+		for (const word of wordsToGuess) {
+			if (word === startingWord) continue;
+			for (let i = 0; i < startingWord.length; i++) {
+				if (word.charAt(0) === startingWord.charAt(i)) {
+					let newRotation = startRotation === 'h' ? 'v' : 'h';
+					startRotation = newRotation;
+					result.set(word, {word: word, startPos: i, rotation: newRotation, relyOn: startingWord});
+					break;
+				}
+			}
+		}
+		console.log(result);
+		return result;
+	}
 
+	const [targetGrid, setTargetGrid] = useState(wordsToGuessToGrid);
 
 	function handleClick(i) {
 		if (squares[i] !== '*') return;
@@ -209,7 +250,7 @@ export default function Game() {
 			<div className='game'>
 
 				<div className='game-board'>
-					<Board row={row} column={column} currentCount={currentCount} target={wordsToGuess} foundSoFar={charFoundSoFar} squares={history} choices={words} onPlay={handlePlay} />
+					<Board row={row} column={column} currentCount={currentCount} wordsToGuess={wordsToGuess} foundSoFar={charFoundSoFar} squares={history} choices={words} onPlay={handlePlay} />
 				</div>
 
 				<div>
