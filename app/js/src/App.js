@@ -38,14 +38,19 @@ function Board({ row, column, currentCount, wordsToGuess, foundSoFar, squares, c
 		// console.log('starting word -> ' + startingWord);
 		// fitWords();
 
-		let gridArr = [{word: 'and', startPos: 0, rotation: 'h'}, {word: 'ant', startPos: 0, rotation: 'v'}];
+		let words = ['and', 'ant', 'devil'];
+		const deps = wordsDependencyMap(words);
+		const gridArr = processToGrid(deps);
+		console.log(gridArr);
+
+		// let gridArr = [{word: 'and', startPos: 0, rotation: 'h'}, {word: 'ant', startPos: 0, rotation: 'v'}];
 		const guessGrid = Array(row*column);
 
 		for (let i in gridArr) {
 			// console.log(gridArr[i]);
 			const word = gridArr[i].word;
 			const pos = gridArr[i].startPos;
-			const rot = gridArr[i].rotation;
+			const rot = gridArr[i].rot;
 			for (let w = 0; w < word.length; w++) {
 				if (rot === 'h') {
 					guessGrid[pos + w] = word[w];
@@ -145,8 +150,8 @@ function Board({ row, column, currentCount, wordsToGuess, foundSoFar, squares, c
 export default function Game() {
 	let status;
 	
-	const row = 4;
-	const column = 4;
+	const row = 5;
+	const column = 5;
 	const maxTurnPerGame = row * column - 2;
 	const wordChoice = Array.from('abcdefghijklmnopqrstuvwxyz');
 	const wordTarget = Array.from('and');
@@ -262,3 +267,64 @@ export default function Game() {
 	);
 }
 
+function wordsDependencyMap(words) {
+
+    let depMap = new Map();
+
+    for (let i = 0; i < words.length; i++) {
+        for (let j = i + 1; j < words.length; j++) {
+            for (let k = 0; k < words[i].length; k++) {
+                if (words[i].charAt(k) == words[j].charAt(0)) {
+                    let key = depMap.get(words[i]);
+                    if (key) {
+                        const value = key.hasDep;
+                        value.add({offset: k, word: words[j]});
+                    }
+                    else {
+                        depMap.set(words[i], {hasDep: new Set([...[{offset: k, word: words[j]}]])});
+                    }
+                }
+            }
+            for (let k = 0; k < words[j].length; k++) {
+                if (words[j].charAt(k) == words[i].charAt(0)) {
+                    let key = depMap.get(words[j]);
+                    if (key) {
+                        
+                        const value = key.hasDep;
+                        value.add({offset: k, word: words[i]});
+                    }
+                    else {
+                        depMap.set(words[j], {hasDep: new Set([...[{offset: k, word: words[i]}]])});
+                    }
+                }
+            }
+
+        }
+    }
+    return depMap
+}
+
+function processToGrid(depMap) {
+    let arr = [];
+    let processedWord = new Set();
+
+    let startPos = 0;
+    let iniRot = 'h';
+
+    depMap.forEach((v, k) => {
+        if (!processedWord.has(k)) {
+            arr.push({word: k, startPos: startPos, rot: iniRot})
+            processedWord.add(k);
+        }
+        // process dependents if there is any
+        for (let d of v.hasDep) {
+            console.log(d.word);
+            if (!processedWord.has(d.word)) {
+                arr.push({word: d.word, startPos: startPos + d.offset, rot: iniRot==='h' ? 'v' : 'h'});
+                processedWord.add(d.word);
+            }
+        }
+    });
+    console.log(arr);
+    return arr;
+}
