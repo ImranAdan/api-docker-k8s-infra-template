@@ -37,7 +37,7 @@ test('start positions', () => {
     wordGrid[6] = 'i';
     wordGrid[7] = 'v';
     wordGrid[8] = 'e';
-    let result = hasOverlappedChars(wordGrid, 'devil', row, column);
+    let result = hasWrittenToGrid(wordGrid, 'devil', row, column);
 
 
     // console.log(output);
@@ -56,30 +56,24 @@ test('start position -devil-', () => {
     wordGrid[24] = 'i';
     wordGrid[35] = 'n';
     wordGrid[46] = 'g';
-    wordGrid[47] = 'i';
-    wordGrid[48] = 'v';
-    wordGrid[49] = 'e';
-    let result = hasOverlappedChars(wordGrid, 'devil', row, column);
+    // wordGrid[47] = 'i';
+    // wordGrid[48] = 'v';
+    // wordGrid[49] = 'e';
+    let result = hasWrittenToGrid(wordGrid, 'give', row, column);
+    displayWordGrid(wordGrid, row, column);
+    result = hasWrittenToGrid(wordGrid, 'devil', row, column);
+    displayWordGrid(wordGrid, row, column);
 
-    let output = "";
-    for (let i = 0; i < wordGrid.length; i++) {
-        output+= wordGrid[i];
-        if (i % row === (row -1)) {
-            output += '\n';
-        }
-    }
-    console.log(output);
-    console.log(result);
     // expect(result.has(3)).toBe(true);
 });
 
-test('common letters in two words', () => {
+test.only('common letters in two words', () => {
     // let words = ['let', 'no', 'and', 'ant', 'devil', 'give', 'junky', 'clap', 'van', 'thing'];
-    let words = ['let', 'thing', 'devil', 'give'];
+    // let words = ['let', 'thing', 'devil', 'give'];
     // let words = ['let', 'thing', 'devil'];
     // let words = ['and', 'dro', 'mutta', 'oa', 'azz', 'ant'];
     // let words = ['mant', 'ant'];
-    // let words = ['duplicates', 'pantomine', 'she', 'tone', 'duty', 'easy'];
+    let words = ['duplicates', 'pantomine', 'she', 'tone', 'duty', 'easy'];
     // console.log(depMap);
     // depMap.forEach((v, k) => {
     //     console.log(v);
@@ -172,141 +166,63 @@ function processToGrid(words, row, column) {
             continue;
         }
 
-        let startPosFromExisting = hasOverlappedChars(wordGrid, currentWord, row, column);
-
-        console.log(startPosFromExisting)
-        // if this is the first word then start at first position
-        if (startPosFromExisting.size === 0 && processedWord.size === 0) {
-            startPosFromExisting.add(0);
+        if (processedWord.size === 0) {
+            // this is the first word
+            writeToGridRow(wordGrid, row, column, 0, currentWord);
+            processedWord.add(currentWord)
         }
-        
-        console.log(startPosFromExisting)
-
-        for (let start of startPosFromExisting) {
-
-            // If currenWord was just written in horizontal or vertical then skip it
-            // Otherwise, it will get written again in another direction if spaces available
-            // and conditions are satisfied.
-            if (processedWord.has(currentWord)) break;
-
-            for (let p = 0; p < wordGrid.length; p++) {
-                let currentGrid = wordGrid.slice();
-                let currentRow = start % row;
-                let currentColumn = Math.floor(p / column);
-
-                // Can currentWord fit onto the grid horizontally?
-                if (currentRow + currentWord.length <= row) {
-                    let writeWordToGrid = true;
-
-                    // check before writing currentWord to the grid
-                    for (let i = 0; i < currentWord.length; i++) {
-
-                        // Fail if start position is:
-                        // - not within the grid
-                        // - the start char is next to another char of another word
-                        if (start - 1 >= 0 && currentGrid[start - 1] !== '*') {
-                            writeWordToGrid = false;
-                            break;
-                        }
-
-                        // Fail if end postion next to another char
-                        if (wordGrid[start + currentWord.length] !== '*') {
-                            // console.log('Failed. End char next to another char: ' + currentWord + ':' + start+ ':'+ wordGrid[start + currentWord.length]);
-                            writeWordToGrid = false;
-                            break;
-                        }
-
-                        // Dont fail if end char is an overlapped char
-                        // console.log(currentWord + ':' + currentWord[currentWord.length -1] + ':' + wordGrid[start + currentWord.length -1]);
-                        if (wordGrid[start + currentWord.length -1] === currentWord[currentWord.length -1] && wordGrid[start] === '*') {
-                            continue;
-                        }
-                        
-                        
-                        // console.log(currentWord + ' [ ' + i + ':' + (start + i -  column) + ']' + wordGrid[start + i-  column]);
-                        // // Fail if next char down is not empty excep the first char
-                        if (i !== 0 && wordGrid[start + i - column] !== undefined && wordGrid[start + i - column] !== '*') {
-                            writeWordToGrid = false;
-                            break;
-                        }
-                        
-                        // Don't fail the check if the first character is an overlappep char
-                        if (currentGrid[start + i] === currentWord[i]) {
-                            continue;
-                        }
-
-                        if (currentGrid[start + i] !== '*'
-                            // || wordGrid[start + i * column] !== '*'
-                            // || wordGrid[start - i * column] !== '*'
-                        ) {
-                            writeWordToGrid = false;
-                            break;
-                        }
-                    }
-                    if (writeWordToGrid) {
-
-                        for (let i = 0; i < currentWord.length; i++) {
-                            wordGrid[start + i] = currentWord[i];
-                        }
-                        processedWord.add(currentWord);
-                        // startPosFromExisting.clear();
-                        wordFittedSoFar += 1;
-                        wordsSeen.clear();
-                        break;
-                    }
-
-                }
-
-                if (currentColumn + currentWord.length <= column) {
-                    let writeWordToGrid = true;
-
-                    // can this word be written on the grid?
-                    for (let i = 0; i < currentWord.length; i++) {
-                        
-                        // Don't fail the check ifi the first character is an overlappep char
-                        if (currentGrid[start + i * column] === currentWord[i]) continue;
-
-                        
-                        // Fail if first char is adjacent to any other chars
-                        if (currentGrid[start - i * column ] !== undefined && currentGrid[start - i * column ] !== '*'
-                            || currentGrid[start + i * column +1] !== '*'
-                        ) {
-                            writeWordToGrid = false;
-                            break;
-                        }
-                        
-                        // console.log(currentWord + ':current.[' + start + ']' + ' [' + i + ':' + (start -1) + ']' + wordGrid[start + i * column -1]);
-                        // console.log(currentWord + '.start' + start + ' [' + currentGrid[start + i * column -1] +']');
-                        // TODO: to check for adjacent chars before writting to the grid
-                        // if ( i!==0 &&
-                        //     ((currentGrid[start + i * column -1] !== '*') || (currentGrid[start + i * column + 1]))) {
-
-                        // }
-                        if (i !== 0 && currentGrid[start + i * column -1] !== '*') {
-                            writeWordToGrid = false;
-                            break;
-                        }
-
-                        if (currentGrid[start + i * column] !== '*') {
-                            writeWordToGrid = false;
-                            break;
-                        }
-                    }
-
-                    if (writeWordToGrid) {
-
-                        for (let i = 0; i < currentWord.length; i++) {
-                            wordGrid[start + i * column] = currentWord[i];
-                        }
-                        processedWord.add(currentWord);
-                        wordFittedSoFar += 1;
-                        wordsSeen.clear();
-                        // startPosFromExisting.clear();
-                        break;
-                    }
-                }
+        else {
+            let writtenSuccess = hasWrittenToGrid(wordGrid, currentWord, row, column);
+    
+            if (writtenSuccess) {
+                processedWord.add(currentWord);
+                wordsSeen.clear();
             }
+
         }
+
+
+        // }
+        // console.log(startPosFromExisting)
+        // // if this is the first word then start at first position
+        // if (startPosFromExisting.size === 0 && processedWord.size === 0) {
+        //     startPosFromExisting.add(0);
+        // }
+        
+        // console.log(startPosFromExisting)
+
+        // for (let start of startPosFromExisting) {
+
+        //     // If currenWord was just written in horizontal or vertical then skip it
+        //     // Otherwise, it will get written again in another direction if spaces available
+        //     // and conditions are satisfied.
+        //     if (processedWord.has(currentWord)) break;
+
+        //     for (let p = 0; p < wordGrid.length; p++) {
+        //         let currentGrid = wordGrid.slice();
+        //         let currentRow = start % row;
+        //         let currentColumn = Math.floor(p / column);
+
+        //         // Can currentWord fit onto the grid horizontally?
+        //         if (currentRow + currentWord.length <= row) {
+        //             let writeWordToGrid = true;
+        //             if (writeWordToGrid) {
+
+        //                 for (let i = 0; i < currentWord.length; i++) {
+        //                     wordGrid[start + i] = currentWord[i];
+        //                 }
+        //                 processedWord.add(currentWord);
+        //                 // startPosFromExisting.clear();
+        //                 wordFittedSoFar += 1;
+        //                 wordsSeen.clear();
+        //                 break;
+        //             }
+
+        //         }
+
+
+        //     }
+        // }
     
         // does current word has any overlapped words?
         for (let c of currentWord) {
@@ -324,14 +240,7 @@ function processToGrid(words, row, column) {
 
     }
 
-    let output = "";
-    for (let i = 0; i < wordGrid.length; i++) {
-        output+= wordGrid[i];
-        if (i % row === (row -1)) {
-            output += '\n';
-        }
-    }
-    console.log(output);
+    displayWordGrid(wordGrid, row, column);
 
     return arr;
 }
@@ -350,6 +259,90 @@ function wordsToGrid(words, row, column) {
     return result;
 }
 
+function canWriteColumn(wordGrid, row, column, startPos, currentWord) {
+    let columnAbove = startPos - row;
+    if (columnAbove < 0) columnAbove = startPos;
+    let columnBelow = startPos + currentWord.length * column;
+
+    // Overriding existing word?
+    let notEmptyCell = 0;
+    let existingChar = [];
+    let leftChars = [];
+    let rightChars = [];
+    for (let i = 0; i < currentWord.length; i++) {
+        leftChars.push(wordGrid[startPos + i * row -1]);
+        rightChars.push(wordGrid[startPos + i * row +1]);
+        if (wordGrid[startPos + i * row] !== '*') {
+            existingChar.push(wordGrid[startPos + i]);
+            notEmptyCell++;
+        }
+    }
+    console.log('column.write -> ' + currentWord);
+    console.log(leftChars);
+    console.log(rightChars);
+    console.log(existingChar);
+    console.log(wordGrid[columnBelow]);
+    if (notEmptyCell === currentWord.length) {
+        console.log('Column write failed [' + currentWord +']' + ';overriding existing characters -> [' + existingChar.join('') + ']');
+        return false;
+    }
+
+    // Adjacent neighbours are not empty
+    for (let i = 0; i < leftChars.length; i++) {
+        const lc1 = leftChars[i];
+        const lc2 = leftChars[i+1];
+        if (lc1 !== '*' && lc2 !== '*') {
+            console.log('Column write failed. Consecutive neighbours are not empty [' + leftChars.join('') + '] current=[' + currentWord + ']');
+            return false;
+        }
+
+        const rc1 = rightChars[i];
+        const rc2 =rightChars[i +1];
+        if (rc1 !== '*' && rc2 !== '*') {
+            console.log('Column write failed. Consecutive neighbours are not empty [' + rightChars.join('') + '] current=[' + currentWord + ']');
+            return false;
+        }
+    }
+
+    if (wordGrid[columnBelow] !== undefined && wordGrid[columnBelow] !== '*') {
+        console.log('Column write failed. Char row below is not empty -> [' + wordGrid[columnBelow] + ']');
+        return false;
+
+    }
+    
+    if (columnAbove === 0 && wordGrid[columnAbove] === currentWord[0]) return true;
+    // start at overlapped char
+    if (wordGrid[startPos] !== currentWord[0]) {
+        return false;
+    }
+    
+    if ((wordGrid[columnAbove] === '*' && wordGrid[columnBelow] === '*')) {
+        return true;
+    }
+
+    if (wordGrid[startPos] === currentWord[0]) {
+        return true;
+    }
+    console.log('column.above=' + columnAbove, 'column.below=' + columnBelow + ';char.above=' + wordGrid[columnAbove] + ';char.below=' + wordGrid[columnBelow]);
+    return false;
+}
+
+function writeToGridRow(wordGrid, row, column, startPos, currentWord) {
+    for (let i = 0; i < currentWord.length; i++) {
+        wordGrid[startPos +i ] = currentWord[i];
+    }
+    console.log('Row written success [' + currentWord + ']');
+}
+
+function writeToGridColumn(wordGrid, row, column, startPos, currentWord) {
+    for (let i = 0; i < currentWord.length; i++) {
+        const nextRow = startPos + i * column;
+        wordGrid[nextRow] = currentWord[i];
+    }
+    console.log('Column written success [' + currentWord + ']');
+}
+
+
 function canWriteRow(wordGrid, row, column, startPos, currentWord) {
     const left = startPos -1;
     const right = startPos + currentWord.length;
@@ -359,11 +352,27 @@ function canWriteRow(wordGrid, row, column, startPos, currentWord) {
     let leftCharRow = Math.floor(left /column);
     if (leftCharRow < 0) leftCharRow = 0;
 
-    
+    let notEmptyCell = 0;
+    let existingChar = [];
+    for (let i = 0; i < currentWord.length; i++) {
+        if (wordGrid[startPos + i] !== '*') {
+            existingChar.push(wordGrid[startPos + i]);
+            notEmptyCell++;
+        }
+    }
+    if (notEmptyCell === currentWord.length) {
+        console.log('Row write failed +[' + currentWord +']' + ';overriding existing characters -> [' + existingChar.join('') + ']');
+        return false;
+    }
 
     // at edge then it's fine
-    console.log('Failed: ' + ';leftRow:' + leftCharRow + ';rightRow' + rightCharRow + ';left.char=' + wordGrid[left] + ';right.char=' + wordGrid[right]);
+    // console.log('currentWord:' + currentWord + ';leftRow:' + leftCharRow + ';rightRow' + rightCharRow + ';left.char=' + wordGrid[left] + ';right.char=' + wordGrid[right]);
     // if (wordGrid[leftCharRow] === undefined && wordGrid[rightCharRow] === undefined) return true;
+
+    if ((wordGrid[startPos] !== currentWord[0] && wordGrid[startPos] !== '*')) {
+        console.log('Row write failed ['+currentWord + '];grid.char=' + wordGrid[startPos] + ';word.char=' + currentWord[0]);
+        return false;
+    }
 
     if (currRow === leftCharRow && currRow === rightCharRow && (wordGrid[left] === '*' || wordGrid[left] === undefined) && wordGrid[right] === '*') {
         return true;
@@ -371,8 +380,7 @@ function canWriteRow(wordGrid, row, column, startPos, currentWord) {
     return false;
 }
 
-function hasOverlappedChars(wordGrid, currentWord, row, column) {
-    let startFromExistingWord = new Set();
+function hasWrittenToGrid(wordGrid, currentWord, row, column) {
    
     for (let i = 0; i < wordGrid.length; i++) {
 
@@ -381,36 +389,26 @@ function hasOverlappedChars(wordGrid, currentWord, row, column) {
             if (currentWord[j] === wordGrid[i]) {
                 let charRow = Math.floor(i / column);
                 let charColumn = i % row;
-                console.log(currentWord + ':' + currentWord[j] + ',i:' + i +',j:' + j + ';' + '[' + charRow + ',' + charColumn + ']');
+                console.log(currentWord + ':' + currentWord[j] + ',i:' + i + ',j:' + j + ';' + '[' + charRow + ',' + charColumn + ']');
 
                 // horizontal - need to check if we are still in the same row
-                if (charRow === Math.floor((i -j) /column) && 
-                (wordGrid[i -j] === currentWord[0] && wordGrid[i -j] === '*')) {
-                    console.log('row.before=' + charRow + ';row.after=' + Math.floor((i -j) /column));
-                    startFromExistingWord.add(i - j);
+                if (canWriteRow(wordGrid, row, column, i - j, currentWord)) {
+                    console.log('row.before=' + charRow + ';row.after=' + Math.floor((i - j) / column));
                     const startPos = i - j;
+                    writeToGridRow(wordGrid, row, column, i - j, currentWord);
+                    return true;
 
-                    // Is the left char of starting position is valid or we are at the edge?
-                    if (canWriteRow(wordGrid, row, column, startPos, currentWord.length)) {
-                        
-                    }
-                    // Is the left char of starting position is valid or we are at the edge?
-
-                    
                 }
                 // vertical
-                let newcolumn = i - j* column;
-                if (newcolumn >= 0) {
-                    console.log('column to add: ' + newcolumn);
-                    startFromExistingWord.add(newcolumn);
-                    console.log('col.current=' + charColumn + ';col.new=' + Math.floor((i -j) /column));
-                    
+                if (canWriteColumn(wordGrid, row, column, i - j * column, currentWord)) {
+                    writeToGridColumn(wordGrid, row, column, i - j * column, currentWord);
+                    return true;
                 }
             }
         }
     }
 
-    return startFromExistingWord;
+    return false
 }
 
 function emptyCells(wordGrid, emptyCellContent) {
@@ -424,7 +422,7 @@ function emptyCells(wordGrid, emptyCellContent) {
 
     return emptyCells;
 }
-function displayWordGrid(wordGrid) {
+function displayWordGrid(wordGrid, row, colulmn) {
     let output = "";
     for (let i = 0; i < wordGrid.length; i++) {
         output+= wordGrid[i];
@@ -432,9 +430,99 @@ function displayWordGrid(wordGrid) {
             output += '\n';
         }
     }
+    console.log(output);
 }
 
-test.only('get left char of start position', () => {
+test('write to grid column ', () => {
+    const row = 5;
+    const column = 5;
+    let currentWord = '';
+    let wordGrid = Array(row*column).fill('*');
+    writeToGridRow(wordGrid, 0, 0, 0, 'ant');
+    displayWordGrid(wordGrid, row, column);
+
+    wordGrid = Array(row*column).fill('*');
+    writeToGridColumn(wordGrid, row, column, 0, 'ant');
+    displayWordGrid(wordGrid, row, column);
+
+    wordGrid = Array(row*column).fill('*');
+    currentWord = 'anthology';
+    if (canWriteColumn(wordGrid, row, column, 0, currentWord)) {
+        writeToGridColumn(wordGrid, row, column, 0, currentWord);
+    }
+    displayWordGrid(wordGrid, row, column);
+
+    wordGrid = Array(row*column).fill('*');
+    currentWord = 'let';
+    writeToGridRow(wordGrid, row, column, 0, currentWord);
+    currentWord = 'thing';
+    if (canWriteColumn(wordGrid, row, column, 2, currentWord)) {
+        writeToGridColumn(wordGrid, row, column, 2, currentWord);
+    }
+    displayWordGrid(wordGrid, row, column);
+
+    // Cant write to existing adjacent column
+    wordGrid = Array(row * column).fill('*');
+    writeToGridRow(wordGrid, row, column, 0, 'meat');
+    writeToGridColumn(wordGrid, row, column, 2, 'arm');
+
+    if (canWriteColumn(wordGrid, row, column, 3, 'test')) {
+        writeToGridColumn(wordGrid, row, column, 3, 'test')
+    }
+    displayWordGrid(wordGrid, row, column);
+    expect(wordGrid[8]).toBe('*');
+});
+
+test.only('can write column', () => {
+    const row = 5;
+    const column = 5;
+
+    let wordGrid = Array(row*column).fill('*');
+    wordGrid[5] = 'a';
+    displayWordGrid(wordGrid, row, column);
+    let result = canWriteColumn(wordGrid, row, column, 5, 'ant');
+    expect(result).toBe(true);
+
+    wordGrid = Array(row*column).fill('*');
+    wordGrid[0] = 'a';
+    displayWordGrid(wordGrid, row, column);
+    result = canWriteColumn(wordGrid, row, column, 0, 'ant');
+    expect(result).toBe(true);
+
+    wordGrid = Array(row*column).fill('*');
+    wordGrid[0] = 'x';
+    wordGrid[5] = 'a';
+    result = canWriteColumn(wordGrid, row, column, 5, 'ant');
+    displayWordGrid(wordGrid, row, column);
+    expect(result).toBe(true);
+
+    wordGrid = Array(row*column).fill('*');
+    wordGrid[5] = 'a';
+    wordGrid[20] = 'x';
+    result = canWriteColumn(wordGrid, row, column, 5, 'ant');
+    displayWordGrid(wordGrid, row, column);
+    expect(result).toBe(false);
+
+    wordGrid = Array(row*column).fill('*');
+    wordGrid[5] = 'a';
+    wordGrid[20] = 'x';
+    displayWordGrid(wordGrid, row, column);
+    result = canWriteColumn(wordGrid, row, column, 5, 'an');
+    expect(result).toBe(true);
+    
+    // Cant override existing word
+    wordGrid = Array(row*column).fill('*');
+    writeToGridColumn(wordGrid, row, column, 0, 'ant');
+    result = canWriteColumn(wordGrid, row, column, 5, 'nut');
+    if (result) {
+        writeToGridColumn(wordGrid, row, column, 5, 'nut');
+    }
+    displayWordGrid(wordGrid, row, column);
+    expect(result).toBe(false);
+
+});
+
+test('can write row', () => {
     const row = 5;
     const column = 5;
 
@@ -445,7 +533,7 @@ test.only('get left char of start position', () => {
 
     wordGrid = Array(row*column).fill('*');
     wordGrid[1] = 'n';
-    leftChar = canWriteRow(wordGrid, row, column, 1, 'and');
+    leftChar = canWriteRow(wordGrid, row, column, 0, 'and');
     expect(leftChar).toBe(true);
 
     wordGrid = Array(row*column).fill('*');
@@ -464,6 +552,11 @@ test.only('get left char of start position', () => {
     wordGrid[4] = 't';
     leftChar = canWriteRow(wordGrid, row, column, 0, 'andy');
     expect(leftChar).toBe(false);
+
+    wordGrid = Array(row*column).fill('*');
+    writeToGridRow(wordGrid, row, column, 0, 'and');
+    let hasWritten = canWriteRow(wordGrid, row, column, 0, 'ant');
+    expect(hasWritten).toBe(false);
 });
 
 test('wordsToGrid', () => {
@@ -473,11 +566,11 @@ test('wordsToGrid', () => {
     // let result = wordsToGrid(words, 5, 5);
     let wordGrid = Array(row*column).fill('*');
     let currentWord = '';
-    let startPos = hasOverlappedChars(wordGrid, currentWord, row, column);
+    let startPos = hasWrittenToGrid(wordGrid, currentWord, row, column);
     wordGrid[0] = 'a';
     wordGrid[1] = 'n';
     wordGrid[2] = 't';
-    startPos = hasOverlappedChars(wordGrid, 'at', row, column);
+    startPos = hasWrittenToGrid(wordGrid, 'at', row, column);
     console.log(startPos);
     expect(startPos.size).toBe(2);
     expect(startPos.has(0)).toBe(true);
