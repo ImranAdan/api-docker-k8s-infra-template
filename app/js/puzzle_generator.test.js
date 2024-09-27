@@ -68,12 +68,12 @@ test('start position -devil-', () => {
 });
 
 test.only('common letters in two words', () => {
-    // let words = ['let', 'no', 'and', 'ant', 'devil', 'give', 'junky', 'clap', 'van', 'thing'];
+    let words = ['let', 'no', 'and', 'ant', 'devil', 'give', 'junky', 'clap', 'van', 'thing', 'hive'];
     // let words = ['let', 'thing', 'devil', 'give'];
     // let words = ['let', 'thing', 'devil'];
     // let words = ['and', 'dro', 'mutta', 'oa', 'azz', 'ant'];
     // let words = ['mant', 'ant'];
-    let words = ['duplicates', 'pantomine', 'she', 'tone', 'duty', 'easy'];
+    // let words = ['duplicates', 'pantomine', 'she', 'tone', 'duty', 'easy'];
     // console.log(depMap);
     // depMap.forEach((v, k) => {
     //     console.log(v);
@@ -265,26 +265,25 @@ function canWriteColumn(wordGrid, row, column, startPos, currentWord) {
     let columnBelow = startPos + currentWord.length * column;
 
     // Overriding existing word?
-    let notEmptyCell = 0;
     let existingChar = [];
     let leftChars = [];
     let rightChars = [];
     for (let i = 0; i < currentWord.length; i++) {
         leftChars.push(wordGrid[startPos + i * row -1]);
         rightChars.push(wordGrid[startPos + i * row +1]);
-        if (wordGrid[startPos + i * row] !== '*') {
-            existingChar.push(wordGrid[startPos + i]);
-            notEmptyCell++;
-        }
+        existingChar.push(wordGrid[startPos + i * row]);
     }
-    console.log('column.write -> ' + currentWord);
-    console.log(leftChars);
-    console.log(rightChars);
-    console.log(existingChar);
-    console.log(wordGrid[columnBelow]);
-    if (notEmptyCell === currentWord.length) {
-        console.log('Column write failed [' + currentWord +']' + ';overriding existing characters -> [' + existingChar.join('') + ']');
-        return false;
+    // console.log('column.write -> ' + currentWord);
+    // console.log(leftChars);
+    // console.log(rightChars);
+    // console.log(existingChar);
+    // console.log(wordGrid[columnBelow]);
+    // Overriding existing chars
+    for (let i = 0; i < existingChar.length; i++) {
+        if (existingChar[i] !== '*' && existingChar[i] !== currentWord[i]) {
+            console.log('Column write failed. Overriding existing characters -> [' + existingChar.join('') + '] current=[' + currentWord + ']');
+            return false;
+        }
     }
 
     // Adjacent neighbours are not empty
@@ -311,19 +310,20 @@ function canWriteColumn(wordGrid, row, column, startPos, currentWord) {
     }
     
     if (columnAbove === 0 && wordGrid[columnAbove] === currentWord[0]) return true;
-    // start at overlapped char
-    if (wordGrid[startPos] !== currentWord[0]) {
-        return false;
-    }
+    // // start at overlapped char
+    // if (wordGrid[startPos] !== currentWord[0]) {
+    //     return false;
+    // }
     
+    console.log('[' + currentWord + '];char.above=' + wordGrid[columnAbove] + ';char.below=' + wordGrid[columnBelow]);
     if ((wordGrid[columnAbove] === '*' && wordGrid[columnBelow] === '*')) {
+        console.log("can write column");
         return true;
     }
 
-    if (wordGrid[startPos] === currentWord[0]) {
+    if (wordGrid[startPos] === currentWord[0] && (wordGrid[columnAbove] === '*' || wordGrid[columnAbove] === currentWord[0])) {
         return true;
     }
-    console.log('column.above=' + columnAbove, 'column.below=' + columnBelow + ';char.above=' + wordGrid[columnAbove] + ';char.below=' + wordGrid[columnBelow]);
     return false;
 }
 
@@ -344,39 +344,90 @@ function writeToGridColumn(wordGrid, row, column, startPos, currentWord) {
 
 
 function canWriteRow(wordGrid, row, column, startPos, currentWord) {
-    const left = startPos -1;
+    const left = startPos - 1;
     const right = startPos + currentWord.length;
-    // still on the same row
-    const currRow = Math.floor(startPos /column);
-    const rightCharRow = Math.floor(right /column);
-    let leftCharRow = Math.floor(left /column);
-    if (leftCharRow < 0) leftCharRow = 0;
+    const currRow = Math.floor(startPos / column);
+    let rightCharRow = Math.floor(right / column);
+    let leftCharRow = Math.floor(left / column);
 
-    let notEmptyCell = 0;
-    let existingChar = [];
+    let aboveChars = [];
+    let belowChars = [];
     for (let i = 0; i < currentWord.length; i++) {
-        if (wordGrid[startPos + i] !== '*') {
-            existingChar.push(wordGrid[startPos + i]);
-            notEmptyCell++;
+        if (wordGrid[startPos - row + i] === undefined) {
+            aboveChars.push('*');
+        } else {
+
+            aboveChars.push(wordGrid[startPos - row + i]);
+        }
+        if (wordGrid[startPos + row + i] === undefined) {
+            belowChars.push('*');
+        } else {
+
+            belowChars.push(wordGrid[startPos + row + i]);
         }
     }
-    if (notEmptyCell === currentWord.length) {
-        console.log('Row write failed +[' + currentWord +']' + ';overriding existing characters -> [' + existingChar.join('') + ']');
-        return false;
+
+    // console.log(aboveChars);
+    // console.log(belowChars);
+
+    for (let i = 0; i < currentWord.length; i++) {
+        if ((aboveChars[i] !== '*' && aboveChars[i + 1] === '*') || (aboveChars[i] === '*' && aboveChars[i + 1] !== '*') || (aboveChars[i] === '*' && aboveChars[i + 1] === '*')) {
+            // console.log('above:' + aboveChars[i] + ':' + aboveChars[i +1]);
+        }
+        else if (aboveChars[i] !== '*' && aboveChars[i + 1] !== '*') {
+            console.log('Write row failed. [' + currentWord + '] neighbours not empty. row.above -> [' + aboveChars.join('') + ']');
+            return false;
+        }
+        
+        if ((belowChars[i] !== '*' && belowChars[i + 1] === '*') || (belowChars[i] === '*' && belowChars[i + 1] !== '*') || (belowChars[i] === '*' && belowChars[i + 1] === '*')) {
+            // console.log('below:' + belowChars[i] + ':' + belowChars[i +1]);
+        }
+        else if (belowChars[i] !== '*' && belowChars[i + 1] !== '*') {
+            console.log('Write row failed. [' + currentWord + '] neighbours not empty. row.below ->[' + belowChars.join('') + ']' + 'below:' + belowChars[i] + ':' + belowChars[i +1]);
+            return false;
+        }
     }
 
-    // at edge then it's fine
-    // console.log('currentWord:' + currentWord + ';leftRow:' + leftCharRow + ';rightRow' + rightCharRow + ';left.char=' + wordGrid[left] + ';right.char=' + wordGrid[right]);
-    // if (wordGrid[leftCharRow] === undefined && wordGrid[rightCharRow] === undefined) return true;
+    // is staring postition at the endge?
+    if (startPos % column === 0) {
+        leftCharRow = Math.floor(startPos / (column - 1));
+    } else {
+        leftCharRow = Math.floor(startPos / column);
+    }
+
+    console.log('startPos=' + startPos +';rightCharRow=' + ((startPos + currentWord.length) % (row)));
+    // is ending position at the endge?
+    if ((startPos + currentWord.length) % row === 0) {
+        rightCharRow = currRow;
+    }
+
+    // console.log((startPos % column) + ':' + Math.floor((startPos / (row - 1))) + ':' + ';left.char=' + wordGrid[left]  +';right.char=' + wordGrid[right]);
+
+    // Overriding existing chars?
+    let existingChar = [];
+    for (let i = 0; i < currentWord.length; i++) {
+        existingChar.push(wordGrid[startPos + i]);
+    }
+    for (let i = 0; i < existingChar.length; i++) {
+        if (existingChar[i] !== '*' && existingChar[i] !== currentWord[i]) {
+            console.log('Row write failed . Overriding existing characters -> [' + existingChar.join('') + '] current=[' + currentWord + ']');
+            return false;
+        }
+    }
 
     if ((wordGrid[startPos] !== currentWord[0] && wordGrid[startPos] !== '*')) {
-        console.log('Row write failed ['+currentWord + '];grid.char=' + wordGrid[startPos] + ';word.char=' + currentWord[0]);
+        console.log('Row write failed [' + currentWord + '];grid.char=' + wordGrid[startPos] + ';word.char=' + currentWord[0]);
         return false;
     }
 
-    if (currRow === leftCharRow && currRow === rightCharRow && (wordGrid[left] === '*' || wordGrid[left] === undefined) && wordGrid[right] === '*') {
+    // if all chars on same road and char to left or right of current word are both empty.
+    if (currRow === leftCharRow &&
+        currRow === rightCharRow &&
+        (wordGrid[left] === '*' || wordGrid[left] === undefined || wordGrid[left] === currentWord[0]) &&
+        wordGrid[right] === '*') {
         return true;
     }
+
     return false;
 }
 
@@ -473,7 +524,7 @@ test('write to grid column ', () => {
     expect(wordGrid[8]).toBe('*');
 });
 
-test.only('can write column', () => {
+test('can write column', () => {
     const row = 5;
     const column = 5;
 
@@ -489,12 +540,16 @@ test.only('can write column', () => {
     result = canWriteColumn(wordGrid, row, column, 0, 'ant');
     expect(result).toBe(true);
 
-    wordGrid = Array(row*column).fill('*');
+    // Row above startPos is not empty
+    wordGrid = Array(row * column).fill('*');
     wordGrid[0] = 'x';
     wordGrid[5] = 'a';
     result = canWriteColumn(wordGrid, row, column, 5, 'ant');
+    if (result) {
+        writeToGridColumn(wordGrid, row, column, 5, 'ant');
+    }
     displayWordGrid(wordGrid, row, column);
-    expect(result).toBe(true);
+    expect(result).toBe(false);
 
     wordGrid = Array(row*column).fill('*');
     wordGrid[5] = 'a';
@@ -522,7 +577,7 @@ test.only('can write column', () => {
 
 });
 
-test('can write row', () => {
+test.only('can write row', () => {
     const row = 5;
     const column = 5;
 
@@ -551,12 +606,64 @@ test('can write row', () => {
     wordGrid = Array(row*column).fill('*');
     wordGrid[4] = 't';
     leftChar = canWriteRow(wordGrid, row, column, 0, 'andy');
+    displayWordGrid(wordGrid, row, column);
     expect(leftChar).toBe(false);
 
     wordGrid = Array(row*column).fill('*');
     writeToGridRow(wordGrid, row, column, 0, 'and');
     let hasWritten = canWriteRow(wordGrid, row, column, 0, 'ant');
     expect(hasWritten).toBe(false);
+
+    // can't override existing word
+    wordGrid = Array(row*column).fill('*');
+    writeToGridColumn(wordGrid, row, column, 0, 'easy');
+    let result = canWriteRow(wordGrid, row, column, 5, 'ant');
+    if (result) {
+        writeToGridRow(wordGrid, row, column, 5, 'ant');
+    }
+    displayWordGrid(wordGrid, row, column);
+    expect(result).toBe(true);
+    
+    // cannot write when row below or above is not empty
+    wordGrid = Array(row*column).fill('*');
+    writeToGridColumn(wordGrid, row, column, 0, 'easy');
+    writeToGridRow(wordGrid, row, column, 5, 'ant');
+
+    result = canWriteRow(wordGrid, row, column, 10, 'sea');
+    if (result) {
+
+        writeToGridRow(wordGrid, row, column, 10, 'sea');
+    }
+    displayWordGrid(wordGrid, row, column);
+    expect(result).toBe(false);
+
+    // canno write row when start not from edge
+    wordGrid = Array(row*column).fill('*');
+    writeToGridColumn(wordGrid, row, column, 2, 'thing');
+    writeToGridRow(wordGrid, row, column, 16, 'and');
+    result = canWriteRow(wordGrid, row, column, 11, 'giv');
+    if (result) {
+        writeToGridRow(wordGrid, row, column, 11, 'giv');
+    }
+
+    displayWordGrid(wordGrid, row, column);
+    expect(result).toBe(false);
+
+    // test can write when neighbours not all empty
+    wordGrid = Array(row*column).fill('*');
+    writeToGridColumn(wordGrid, row, column, 2, 'thing');
+    result = canWriteRow(wordGrid, row, column, 7, 'hiv');
+    if (result) {
+        writeToGridRow(wordGrid, row, column, 7, 'hiv');
+    }
+
+    displayWordGrid(wordGrid, row, column);
+    expect(result).toBe(true);
+
+    // cannot write word longer than grid
+    wordGrid = Array(row*column).fill('*');
+    result = canWriteRow(wordGrid, row, column, 0, 'anthology');
+    expect(result).toBe(false);
 });
 
 test('wordsToGrid', () => {
