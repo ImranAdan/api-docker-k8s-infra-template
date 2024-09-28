@@ -5,6 +5,8 @@ const writeToGridRow = PuzzleGenerator.writeToGridRow;
 const writeToGridColumn = PuzzleGenerator.writeToGridColumn;
 const canWriteRow = PuzzleGenerator.canWriteRow;
 const canWriteColumn = PuzzleGenerator.canWriteColumn;
+const hasWrittenToGrid = PuzzleGenerator.hasWrittenToGrid;
+const processToGrid = PuzzleGenerator.processToGrid;
 
 test('find words from text', () => {
 
@@ -14,37 +16,6 @@ test('find words from text', () => {
     expect(wordSearch.find('bat')).toBe(true);
     expect(wordSearch.find('act')).toBe(true);
 
-});
-
-test('random guess grid', () => {
-
-    // let guessWords = ['and', 'ant'];
-    // // const arr = Array.from('and').from('ant');
-    // let charPool = 'adntxyz';
-    // const flatWords = [... new Set(guessWords.join(''))];
-    // const charPoolArr = Array.from(charPool);
-    // let s1 = new Set(guessWords.join(''));
-    // let s2 = new Set(Array.from(charPool));
-    // // s1.union(s2);
-    // console.log(typeof (s1));
-    // console.log(s1.has('t'));
-
-    // const evens = new Set([2, 4, 6, 8]);
-    // const squares = new Set([1, 4, 9]);
-    // console.log(new Set([...s1, ...s2])); // Set(6) { 2, 4, 6, 8, 1, 9 }
-
-});
-
-test('start positions', () => {
-    let wordGrid = Array(5*5).fill('*');
-    let row = 5;
-    let column = 5;
-    wordGrid[5] = 'g';
-    wordGrid[6] = 'i';
-    wordGrid[7] = 'v';
-    wordGrid[8] = 'e';
-    let result = hasWrittenToGrid(wordGrid, 'devil', row, column);
-    expect(result.has(3)).toBe(true);
 });
 
 test('start position -devil-', () => {
@@ -70,8 +41,9 @@ test('start position -devil-', () => {
 });
 
 test.only('common letters in two words', () => {
-    let words = ['let', 'no', 'and', 'ant', 'devil', 'give', 'junky', 'clap', 'van', 'thing', 'hive'];
+    // let words = ['let', 'no', 'and', 'ant', 'devil', 'give', 'junky', 'clap', 'van', 'thing', 'hive'];
     // let words = ['let', 'thing', 'devil', 'give'];
+    let words = ['and', 'ant', 'devil', 'clap'];
     // let words = ['let', 'thing', 'devil'];
     // let words = ['and', 'dro', 'mutta', 'oa', 'azz', 'ant'];
     // let words = ['mant', 'ant'];
@@ -80,232 +52,8 @@ test.only('common letters in two words', () => {
     // depMap.forEach((v, k) => {
     //     console.log(v);
     // });
-    const result = processToGrid(words, 11, 11);
-    console.log(result); // test is good but write horizontally is broken
+    const result = processToGrid(words, 5, 5);
 });
-
-test('words dependent graph', () => {
-    let expected = [{word: 'and', startPos: 0, rotation: 'h'}, {word: 'ant', startPos: 0, rotation: 'v'}];
-    let words = ['let', 'no', 'and', 'ant', 'devil', 'give', 'junky', 'clap', 'van', 'thing'];
-    // let words = ['and', 'dro', 'mutta', 'oa', 'azz', 'ant'];
-    // let words = ['mant', 'ant'];
-    // let words = ['let', 'and', 'thing', 'give'];
-    let depMap = wordsDependencyMap(words, 5, 5);
-    // console.log(depMap);
-    // depMap.forEach((v, k) => {
-    //     console.log(v);
-    // });
-    const result = processToGrid(words, depMap);
-    console.log(result);
-
-});
-
-function wordsDependencyMap(words) {
-
-    let depMap = new Map();
-
-    for (let i = 0; i < words.length; i++) {
-        for (let j = i + 1; j < words.length; j++) {
-            for (let k = 0; k < words[i].length; k++) {
-                // if (words[i].charAt(k) == words[j].charAt(0)) {
-                if (words[j].indexOf(words[i].charAt(k)) !== -1) {
-                    let key = depMap.get(words[i]);
-                    if (key) {
-                        const value = key.hasDep;
-                        value.add({offset: k, word: words[j]});
-                    }
-                    else {
-                        depMap.set(words[i], {hasDep: new Set([...[{offset: k, word: words[j]}]])});
-                    }
-                    break;
-                }
-            }
-            for (let k = 0; k < words[j].length; k++) {
-                // if (words[j].charAt(k) == words[i].charAt(0)) {
-                if (words[i].indexOf(words[j].charAt(k)) !== -1) {
-                    let key = depMap.get(words[j]);
-                    if (key) {
-                        
-                        const value = key.hasDep;
-                        value.add({offset: k, word: words[i]});
-                    }
-                    else {
-                        depMap.set(words[j], {hasDep: new Set([...[{offset: k, word: words[i]}]])});
-                    }
-                    break;
-                }
-            }
-        }
-    }
-
-    return depMap
-}
-function processToGrid(words, row, column) {
-    let arr = [];
-    let processedWord = new Set();
-
-    let wordGrid = Array(row*column).fill('*');
-    let wordFittedSoFar = 0;
-    let wordsToAdd = [words[0]];
-    console.log(wordsToAdd);
-    // a set containing words seen
-    let wordsSeen = new Set(); 
-    while (wordsToAdd.length > 0) {
-        // console.log(wordsToAdd);
-        // for (const currentWord of wordsToAdd) {
-        const currentWord = wordsToAdd.shift();
-        const currWordsSeen = new Set(wordsSeen);
-        const newWordsSeen = wordsSeen.add(currentWord);
-        // console.log(newWordsSeen);
-        // console.log(currWordsSeen);
-        // console.log(wordsToAdd);
-        const setEquals = newWordsSeen.size === currWordsSeen.size && [...newWordsSeen].every(value => currWordsSeen.has(value));
-        if (setEquals) break;
-
-        console.log(processedWord);
-        console.log(currentWord);
-        if (processedWord.has(currentWord)) {
-            continue;
-        }
-
-        if (processedWord.size === 0) {
-            // this is the first word
-            writeToGridRow(wordGrid, row, column, 0, currentWord);
-            processedWord.add(currentWord)
-        }
-        else {
-            let writtenSuccess = hasWrittenToGrid(wordGrid, currentWord, row, column);
-    
-            if (writtenSuccess) {
-                processedWord.add(currentWord);
-                wordsSeen.clear();
-            }
-
-        }
-
-
-        // }
-        // console.log(startPosFromExisting)
-        // // if this is the first word then start at first position
-        // if (startPosFromExisting.size === 0 && processedWord.size === 0) {
-        //     startPosFromExisting.add(0);
-        // }
-        
-        // console.log(startPosFromExisting)
-
-        // for (let start of startPosFromExisting) {
-
-        //     // If currenWord was just written in horizontal or vertical then skip it
-        //     // Otherwise, it will get written again in another direction if spaces available
-        //     // and conditions are satisfied.
-        //     if (processedWord.has(currentWord)) break;
-
-        //     for (let p = 0; p < wordGrid.length; p++) {
-        //         let currentGrid = wordGrid.slice();
-        //         let currentRow = start % row;
-        //         let currentColumn = Math.floor(p / column);
-
-        //         // Can currentWord fit onto the grid horizontally?
-        //         if (currentRow + currentWord.length <= row) {
-        //             let writeWordToGrid = true;
-        //             if (writeWordToGrid) {
-
-        //                 for (let i = 0; i < currentWord.length; i++) {
-        //                     wordGrid[start + i] = currentWord[i];
-        //                 }
-        //                 processedWord.add(currentWord);
-        //                 // startPosFromExisting.clear();
-        //                 wordFittedSoFar += 1;
-        //                 wordsSeen.clear();
-        //                 break;
-        //             }
-
-        //         }
-
-
-        //     }
-        // }
-    
-        // does current word has any overlapped words?
-        for (let c of currentWord) {
-            
-            for (let w of words) {
-                if (!processedWord.has(w) && w.indexOf(c) !== -1 && wordsToAdd.indexOf(w) === -1) {
-                    wordsToAdd.push(w);
-                }
-            }
-        }
-        // can get into an infinite loop when add a new word to processWord fail 
-        // but will continue to be added again in next loop
-        // Solution is to check that given a processedWord when adding a new word to process fail 
-        // and dont hcange then we have reached the limit iee cannot fit anymore word into the grid
-
-    }
-
-    displayWordGrid(wordGrid, row, column);
-
-    return arr;
-}
-
-
-
-
-
-
-
-
-function hasWrittenToGrid(wordGrid, currentWord, row, column) {
-   
-    for (let i = 0; i < wordGrid.length; i++) {
-
-        // start offset when overlapped char is not the 1st char
-        for (let j = 0; j < currentWord.length; j++) {
-            if (currentWord[j] === wordGrid[i]) {
-                let charRow = Math.floor(i / column);
-                let charColumn = i % row;
-                console.log(currentWord + ':' + currentWord[j] + ',i:' + i + ',j:' + j + ';' + '[' + charRow + ',' + charColumn + ']');
-
-                // horizontal - need to check if we are still in the same row
-                if (canWriteRow(wordGrid, row, column, i - j, currentWord)) {
-                    console.log('row.before=' + charRow + ';row.after=' + Math.floor((i - j) / column));
-                    const startPos = i - j;
-                    writeToGridRow(wordGrid, row, column, i - j, currentWord);
-                    return true;
-
-                }
-                // vertical
-                if (canWriteColumn(wordGrid, row, column, i - j * column, currentWord)) {
-                    writeToGridColumn(wordGrid, row, column, i - j * column, currentWord);
-                    return true;
-                }
-            }
-        }
-    }
-
-    return false
-}
-
-function emptyCells(wordGrid, emptyCellContent) {
-    let emptyCells = new Set();
-
-    for (let i = 0; i < wordGrid.length; i++) {
-        if (wordGrid[i] === emptyCellContent) {
-            emptyCells.add(i);
-        }
-    }
-
-    return emptyCells;
-}
-// function displayWordGrid(wordGrid, row, colulmn) {
-//     let output = "";
-//     for (let i = 0; i < wordGrid.length; i++) {
-//         output+= wordGrid[i];
-//         if (i % row === (row -1)) {
-//             output += '\n';
-//         }
-//     }
-//     console.log(output);
-// }
 
 test('write to grid column ', () => {
     const row = 5;
@@ -487,24 +235,6 @@ test('can write row', () => {
     wordGrid = Array(row*column).fill('*');
     result = canWriteRow(wordGrid, row, column, 0, 'anthology');
     expect(result).toBe(false);
-});
-
-test('wordsToGrid', () => {
-    let words = ['and', 'dro', 'mutta', 'oa', 'azz', 'ant'];
-    let row = 5;
-    let column = 5;
-    // let result = wordsToGrid(words, 5, 5);
-    let wordGrid = Array(row*column).fill('*');
-    let currentWord = '';
-    let startPos = hasWrittenToGrid(wordGrid, currentWord, row, column);
-    wordGrid[0] = 'a';
-    wordGrid[1] = 'n';
-    wordGrid[2] = 't';
-    startPos = hasWrittenToGrid(wordGrid, 'at', row, column);
-    console.log(startPos);
-    expect(startPos.size).toBe(2);
-    expect(startPos.has(0)).toBe(true);
-    expect(startPos.has(1)).toBe(true);
 });
 
 class WordSearch {

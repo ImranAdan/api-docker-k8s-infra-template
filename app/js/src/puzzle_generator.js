@@ -177,8 +177,8 @@ function canWriteRow(wordGrid, row, column, startPos, currentWord) {
         }
     }
 
-    // console.log(aboveChars);
-    // console.log(belowChars);
+    console.log(aboveChars);
+    console.log(belowChars);
 
     for (let i = 0; i < currentWord.length; i++) {
         if ((aboveChars[i] !== '*' && aboveChars[i + 1] === '*') || (aboveChars[i] === '*' && aboveChars[i + 1] !== '*') || (aboveChars[i] === '*' && aboveChars[i + 1] === '*')) {
@@ -209,9 +209,8 @@ function canWriteRow(wordGrid, row, column, startPos, currentWord) {
     // is ending position at the endge?
     if ((startPos + currentWord.length) % row === 0) {
         rightCharRow = currRow;
+        console.log('rightCharRow=' + rightCharRow);
     }
-
-    // console.log((startPos % column) + ':' + Math.floor((startPos / (row - 1))) + ':' + ';left.char=' + wordGrid[left]  +';right.char=' + wordGrid[right]);
 
     // Overriding existing chars?
     let existingChar = [];
@@ -230,11 +229,13 @@ function canWriteRow(wordGrid, row, column, startPos, currentWord) {
         return false;
     }
 
+    console.log('currRow=' + currRow + ';leftCharRow='+leftCharRow +';rightCharRow='+rightCharRow+';wordGrid[left]='+wordGrid[left]+';wordGrid[right]='+wordGrid[right] + ';currentWord='+currentWord);
+
     // if all chars on same road and char to left or right of current word are both empty.
     if (currRow === leftCharRow &&
         currRow === rightCharRow &&
         (wordGrid[left] === '*' || wordGrid[left] === undefined || wordGrid[left] === currentWord[0]) &&
-        wordGrid[right] === '*') {
+        wordGrid[right] === '*' || wordGrid[right]=== undefined) {
         return true;
     }
 
@@ -309,8 +310,139 @@ function canWriteColumn(wordGrid, row, column, startPos, currentWord) {
     return false;
 }
 
+function hasWrittenToGrid(wordGrid, currentWord, row, column) {
+   
+    for (let i = 0; i < wordGrid.length; i++) {
+
+        // start offset when overlapped char is not the 1st char
+        for (let j = 0; j < currentWord.length; j++) {
+            if (currentWord[j] === wordGrid[i]) {
+                let charRow = Math.floor(i / column);
+                let charColumn = i % row;
+                console.log(currentWord + ':' + currentWord[j] + ',i:' + i + ',j:' + j + ';' + '[' + charRow + ',' + charColumn + ']');
+
+                // horizontal - need to check if we are still in the same row
+                if (canWriteRow(wordGrid, row, column, i - j, currentWord)) {
+                    console.log('row.before=' + charRow + ';row.after=' + Math.floor((i - j) / column));
+                    const startPos = i - j;
+                    writeToGridRow(wordGrid, row, column, i - j, currentWord);
+                    return true;
+
+                }
+                // vertical
+                if (canWriteColumn(wordGrid, row, column, i - j * column, currentWord)) {
+                    writeToGridColumn(wordGrid, row, column, i - j * column, currentWord);
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false
+}
+// TODO - need reviewing. Do we stil need this?
+function wordsDependencyMap(words) {
+
+    let depMap = new Map();
+
+    for (let i = 0; i < words.length; i++) {
+        for (let j = i + 1; j < words.length; j++) {
+            for (let k = 0; k < words[i].length; k++) {
+                // if (words[i].charAt(k) == words[j].charAt(0)) {
+                if (words[j].indexOf(words[i].charAt(k)) !== -1) {
+                    let key = depMap.get(words[i]);
+                    if (key) {
+                        const value = key.hasDep;
+                        value.add({offset: k, word: words[j]});
+                    }
+                    else {
+                        depMap.set(words[i], {hasDep: new Set([...[{offset: k, word: words[j]}]])});
+                    }
+                    break;
+                }
+            }
+            for (let k = 0; k < words[j].length; k++) {
+                // if (words[j].charAt(k) == words[i].charAt(0)) {
+                if (words[i].indexOf(words[j].charAt(k)) !== -1) {
+                    let key = depMap.get(words[j]);
+                    if (key) {
+                        
+                        const value = key.hasDep;
+                        value.add({offset: k, word: words[i]});
+                    }
+                    else {
+                        depMap.set(words[j], {hasDep: new Set([...[{offset: k, word: words[i]}]])});
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    return depMap
+}
+
+function processToGrid(words, row, column) {
+    let processedWord = new Set();
+    console.log('row:'+ row);
+
+    let wordGrid = Array(row*column).fill('*');
+    let wordsToAdd = [words[0]];
+    console.log(wordsToAdd);
+    // a set containing words seen
+    let wordsSeen = new Set(); 
+    while (wordsToAdd.length > 0) {
+        // console.log(wordsToAdd);
+        const currentWord = wordsToAdd.shift();
+        const currWordsSeen = new Set(wordsSeen);
+        const newWordsSeen = wordsSeen.add(currentWord);
+        // console.log(newWordsSeen);
+        // console.log(currWordsSeen);
+        // console.log(wordsToAdd);
+        const setEquals = newWordsSeen.size === currWordsSeen.size && [...newWordsSeen].every(value => currWordsSeen.has(value));
+        if (setEquals) break;
+
+        console.log(processedWord);
+        console.log(currentWord);
+        if (processedWord.has(currentWord)) {
+            continue;
+        }
+
+        if (processedWord.size === 0) {
+            // this is the first word
+            writeToGridRow(wordGrid, row, column, 0, currentWord);
+            processedWord.add(currentWord)
+        }
+        else {
+            let writtenSuccess = hasWrittenToGrid(wordGrid, currentWord, row, column);
+    
+            if (writtenSuccess) {
+                processedWord.add(currentWord);
+                wordsSeen.clear();
+            }
+
+        }
+
+        // does current word has any overlapped words?
+        for (let c of currentWord) {
+            
+            for (let w of words) {
+                if (!processedWord.has(w) && w.indexOf(c) !== -1 && wordsToAdd.indexOf(w) === -1) {
+                    wordsToAdd.push(w);
+                }
+            }
+        }
+    }
+
+    displayWordGrid(wordGrid, row, column);
+
+    return wordGrid;
+}
+
 exports.displayWordGrid = displayWordGrid;
 exports.writeToGridRow = writeToGridRow;
 exports.writeToGridColumn = writeToGridColumn;
 exports.canWriteRow = canWriteRow;
 exports.canWriteColumn = canWriteColumn;
+exports.hasWrittenToGrid = hasWrittenToGrid;
+exports.processToGrid = processToGrid;
