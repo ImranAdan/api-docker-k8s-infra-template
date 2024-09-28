@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { displayWordGrid } from './puzzle_generator';
 
 class WordSearch {
     constructor() {
