@@ -205,7 +205,7 @@ function canWriteRow(wordGrid, row, column, startPos, currentWord) {
         leftCharRow = Math.floor(startPos / column);
     }
 
-    console.log('startPos=' + startPos +';rightCharRow=' + ((startPos + currentWord.length) % (row)));
+    // console.log('startPos=' + startPos +';rightCharRow=' + ((startPos + currentWord.length) % (row)));
     // is ending position at the endge?
     if ((startPos + currentWord.length) % row === 0) {
         rightCharRow = currRow;
@@ -229,7 +229,7 @@ function canWriteRow(wordGrid, row, column, startPos, currentWord) {
         return false;
     }
 
-    console.log('currRow=' + currRow + ';leftCharRow='+leftCharRow +';rightCharRow='+rightCharRow+';wordGrid[left]='+wordGrid[left]+';wordGrid[right]='+wordGrid[right] + ';currentWord='+currentWord);
+    // console.log('currRow=' + currRow + ';leftCharRow='+leftCharRow +';rightCharRow='+rightCharRow+';wordGrid[left]='+wordGrid[left]+';wordGrid[right]='+wordGrid[right] + ';currentWord='+currentWord);
 
     // if all chars on same road and char to left or right of current word are both empty.
     if (currRow === leftCharRow &&
